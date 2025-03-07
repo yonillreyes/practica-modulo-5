@@ -1,0 +1,54 @@
+Comandos de las practicas del modulo 4
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+comandos de practica 1
+
+sudo dnf update -y
+sudo dnf install httpd -y
+sudo sustemctl status httpd
+mkdir -p /var/www/html/holamundo
+cd ..
+ls 
+cd var
+cd www
+cd html
+ls
+cd /var/www/html/holamundo
+sudo nano index.html
+sudo nano /etc/httpd/conf.d/holamundo.conf
+sudo systemctl restart httpd
+sudo mkdir -p /var/www/html/migente
+cd /var/ww/html/migente
+sudo nano index.html
+sudo nano /etc/httpd/conf.d/migente.conf
+sudo nano /etc/httpd/conf/httpd.conf
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+comandos de practica 2
+
+sudo dnf update -y
+sudo dnf install postfix -y
+sudo dnf install mailx -y
+sudo dnf install -y s-nail
+sudo systemctl status postfix.service
+sudo nano /etc/postfix/nain.cf
+sudo chmod 600 /etc/postfix/sasl_passwd
+sudo postmap /etc/postfix/sasl_passwd
+echo "Yonill Reyes 2024-1574 SO3" | mail -s "Manbusefuealaguerra" os3conadrian@gmail.com
+  
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+comandos practica 3
+
+sudo dnf install -y cups
+sudon dnf install -y cups-pdf
+sudo firewall-cmd --permanent --add-port-631/tcp
+sudo firewall-cmd --reload 
+cupsctl --remote-admin --remote-any --share-printer
+sudo nano /etc/cups/cupsd.conf
+
+(los demas comandos se realizan fuera de la terminal entonces no cuentan como comandos.)
+
+
