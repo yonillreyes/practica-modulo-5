@@ -1,54 +1,256 @@
-Comandos de las practicas del modulo 4
+Practica 1: Syncronizacion de carpetas con Rsync (1Pts)
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Crear una carpeta en su servidor primario y dentro crear 100 archivos (con el comando touch)
+Utilizando rsync, copiar el contenido de la carpeta a el servidor remoto
+Crear un script con el comando de sincronizacion de la carpeta y luego crear un crontab para que se sincronizen cada 1 minuto. cree un archivo en el server primario y luego compruebe que el crontab esta funcionando validando en el servidor secundario si la carpeta se creo
+Practica 2: Instalacion y configuracion del Cluster (2Pts)
 
-comandos de practica 1
+Instalar un Cluster de Alta disponibilidad (Utilizando la herramienta Heartbeat o Pacemaker) con 2 nodos (Servidor) en modo bridge . Configurar una IP flotante para que el cluster funcione utilizando una misma Direccion IP
+Realizar las pruebas haciendo ping a la ip flotante provista por la solucion de HA y altarnando reinicios entre los servidores, el ping debe de mantenerse
+Practica 3: Cluster de Alta Disponibilidad HTTP (1Pts)
 
-sudo dnf update -y
-sudo dnf install httpd -y
-sudo sustemctl status httpd
-mkdir -p /var/www/html/holamundo
-cd ..
-ls 
-cd var
-cd www
-cd html
-ls
-cd /var/www/html/holamundo
-sudo nano index.html
-sudo nano /etc/httpd/conf.d/holamundo.conf
-sudo systemctl restart httpd
-sudo mkdir -p /var/www/html/migente
-cd /var/ww/html/migente
-sudo nano index.html
-sudo nano /etc/httpd/conf.d/migente.conf
-sudo nano /etc/httpd/conf/httpd.conf
+Configura 2 servidores web (apache/NGINX). En cada uno desplieque una pagina html que especifique que servidor es (server1, Server2)
+Implementar HA en los servidores utilizando  KeepAlived. Validar  la Alta Disponibilidad del servicio apagando uno de los servidores y y accediendo al servicio de apache a traves de un navegador.
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-comandos de practica 2
 
-sudo dnf update -y
-sudo dnf install postfix -y
-sudo dnf install mailx -y
-sudo dnf install -y s-nail
-sudo systemctl status postfix.service
-sudo nano /etc/postfix/nain.cf
-sudo chmod 600 /etc/postfix/sasl_passwd
-sudo postmap /etc/postfix/sasl_passwd
-echo "Yonill Reyes 2024-1574 SO3" | mail -s "Manbusefuealaguerra" os3conadrian@gmail.com
-  
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------
-comandos practica 3
 
-sudo dnf install -y cups
-sudon dnf install -y cups-pdf
-sudo firewall-cmd --permanent --add-port-631/tcp
-sudo firewall-cmd --reload 
-cupsctl --remote-admin --remote-any --share-printer
-sudo nano /etc/cups/cupsd.conf
+practica 1:
 
-(los demas comandos se realizan fuera de la terminal entonces no cuentan como comandos.)
+
+
+1. Preparativos: conectividad SSH sin contraseña:
+
+Para que rsync funcione de forma no interactiva, necesitamos que el servidor primario se conecte al secundario vía SSH sin pedir contraseña.
+
+Genera una clave SSH en el Linux primario:
+
+
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+
+
+-t rsa -b 4096: algoritmo RSA con 4096 bits.
+-N "": sin passphrase (para que cron no pida clave).
+
+Copia la clave al Linux secundario:
+
+ssh-copy-id -i ~/.ssh/id_rsa.pub <usuario@ip>
+
+
+Esto añade tu id_rsa.pub a ~/.ssh/authorized_keys del servidor secundario.
+
+
+
+Prueba la conexión:
+
+ssh usuario@secundario
+
+Deberías ver el nombre del secundario sin pedir contraseña.
+
+
+
+
+
+.Crear carpeta y 100 archivos en el primario
+
+Crea la carpeta:
+
+.sudo mkdir -p /opt/rsync_test
+.cd  /opt/rsync_test
+.touch archivo{1..100}
+
+
+
+.Sincronización manual con rsync
+
+
+Instala rsync si no lo tienes:
+
+sudo dnf install -y rsync     (en los dos servidores)
+
+
+
+Ejecuta un primer pase “manual” para comprobar:
+
+rsync -avz -e ssh /opt/rsync_test/ usuario@secundario:/home/usuario/ 
+
+
+
+explicación:
+
+-a (archive): preserva permisos, propietarios, timestamps, recursivo.
+-v (verbose): muestra qué copia.
+-z (compress): comprime datos en tránsito.
+-e ssh: fuerza usar SSH como transporte.
+
+La barra final en origen (/home/usuario/) indica “contenido de esta carpeta”.
+
+
+(revisamos en el secundario a ver si se transfirio)
+
+
+
+Automatizar con script y cron (en el primario):
+
+ Crea el script
+Ejecuta esto en el servidor primario:
+
+nano ~/script
+
+Pega el siguiente contenido:
+
+#!/bin/bash
+rsync -az -e ssh /opt/rsync_test/ usuario@secundario:/home/usuario/
+
+🔄 Reemplaza usuario@secundario por el nombre real de usuario y el hostname o IP del servidor secundario.
+
+Guarda con CTRL+O, luego ENTER, y sal con CTRL+X.
+
+
+
+2. Da permisos de ejecución:
+
+chmod +x ~/script
+
+
+
+3. Agrega la tarea al crontab
+Abre el crontab del usuario actual:
+
+
+crontab -e
+
+Y añade esta línea al final:
+
+* * * * * /bin/bash /home/tu_usuario/script
+
+
+
+ya por ultimo verificamos en el servidor secundario
+
+
+
+----------------------------------------------------------------------------
+
+practica 3
+
+Paso 1: Instalar y Configurar el Servidor Web
+Puedes elegir entre Apache o NGINX. A continuación, se muestra cómo instalar y configurar Apache:​
+
+En ambos servidores:
+
+Instalar Apache:
+sudo dnf install -y httpd
+
+
+
+
+Crear una página HTML personalizada:
+
+En el Servidor 1 (yonill):​
+echo "<h1>Servidor 1 - yonill</h1>" | sudo tee /var/www/html/index.html
+
+
+
+En el Servidor 2 (yonill2):​
+echo "<h1>Servidor 2 - yonill2</h1>" | sudo tee /var/www/html/index.html
+
+
+
+Habilitar y iniciar el servicio de Apache:
+sudo systemctl enable --now httpd
+
+
+
+Configurar el firewall para permitir el tráfico HTTP:
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --reload
+(o lo podemos desactivar directamente)
+
+
+
+
+
+
+
+Paso 2: Instalar y Configurar Keepalived
+
+En ambos servidores:
+
+Instalar Keepalived:
+
+
+sudo dnf install -y keepalived
+
+
+
+
+
+Crear el archivo de configuración de Keepalived:
+
+
+En el Servidor 1 (yonill):​
+
+
+sudo tee /etc/keepalived/keepalived.conf > /dev/null <<EOF
+vrrp_instance VI_1 {
+    state MASTER
+    interface ens160 <aquí ponemos la interfaz que tengamos>
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass clave123
+    }
+    virtual_ipaddress {
+        192.168.100.100
+    }
+}
+EOF
+
+
+En el Servidor 2 (yonill2 respaldo):​
+
+sudo tee /etc/keepalived/keepalived.conf > /dev/null <<EOF
+vrrp_instance VI_1 {
+    state BACKUP
+    interface ens160 <la interfaz que tengamos>
+    virtual_router_id 51
+    priority 90
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass clave123
+    }
+    virtual_ipaddress {
+        192.168.100.100
+    }
+}
+EOF
+
+Asegúrate de que la prioridad del servidor MASTER sea mayor que la del BACKUP.
+
+
+Habilitar e iniciar el servicio de Keepalived:
+
+sudo systemctl enable --now keepalived
+
+
+y reinicamos para ue se apliquen los cambios:
+sudo systemctl restart keepalived
+
+
+probamos la alta dispoiblidad apagando el MASTER del servidor primario con:
+
+sudo systemctl stop keepalived 
+
+
+y nos tienen que salir el servidor de respaldo que seria el servidor dos
+
+
+
+
 
 
